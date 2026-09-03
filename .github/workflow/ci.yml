@@ -1,0 +1,36 @@
+name: CI Pipeline - .NET 9
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+
+    - name: Configurar o .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restaurar dependências
+      run: dotnet restore src/UnitTestingTutorial.slnx
+
+    - name: Compilar o projeto (Build)
+      run: dotnet build src/UnitTestingTutorial.slnx --no-restore
+
+    - name: Executar Testes Unitários e Gerar Cobertura
+      run: dotnet test src/UnitTestingTutorial.slnx --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+    - name: Upload do Artefato de Cobertura
+      uses: actions/upload-artifact@v4
+      if: always() # Garante que o artefato suba mesmo se um teste falhar
+      with:
+        name: cobertura-cobertura-xml
+        path: ./TestResults/**/coverage.cobertura.xml
